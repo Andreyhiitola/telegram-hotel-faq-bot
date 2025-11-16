@@ -430,3 +430,4 @@ def echo_all(message):
     bot.send_message(
         message.chat.id,
         "🤔 Не понимаю вашего вопроса.\n\n"
+   )
