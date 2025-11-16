@@ -430,8 +430,23 @@ def echo_all(message):
     bot.send_message(
         message.chat.id,
         "🤔 Не понимаю вашего вопроса.\n\n"
-        "Пожалуйста, выберите из предложенных вариантов или нажмите кнопку ниже:",
-        reply_markup=markup,
-        parse_mode='HTML'
+        "Пожалуйста, используйте кнопки меню ниже или нажмите на кнопку:",
+        reply_markup=markup
     )
 
+@bot.callback_query_handler(func=lambda call: call.data == "show_menu")
+def callback_menu(call):
+    bot.answer_callback_query(call.id)
+    start(call.message)
+
+if __name__ == '__main__':
+    print("🤖 Бот «Пеликан Алаколь» запущен и готов к работе...")
+    print(f"📝 Загружено {len(FAQ)} FAQ разделов")
+    try:
+        bot.infinity_polling(timeout=10, long_polling_timeout=5)
+    except Exception as e:
+        print(f"❌ Ошибка: {e}")
+        print("Перезапуск через 5 секунд...")
+        import time
+        time.sleep(5)
+        bot.infinity_polling(timeout=10, long_polling_timeout=5)
