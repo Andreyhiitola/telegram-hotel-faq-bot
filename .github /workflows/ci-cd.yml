@@ -7,7 +7,7 @@ on:
   workflow_dispatch:  # Поддержка ручного запуска
 
 env:
-  IMAGE_NAME: andreysagurov/pelikan-admin:latest
+  IMAGE_NAME: andreysagurov/FAQ_telegrambot_Pelican:latest
 
 jobs:
   build_and_push:
@@ -48,7 +48,8 @@ jobs:
             echo "=== Starting deployment at $(date) ==="
             
             # Переход в папку с проектом
-            cd /opt/pelikan-admin-docker
+            cd /opt/FAQ_telegrambot_Pelican
+            echo "Current directory: $(pwd)"
             
             # Обновление кода из репозитория
             echo "Обновление кода..."
@@ -83,7 +84,7 @@ jobs:
 
             # Удаление orphan-контейнеров
             echo "Очистка..."
-            docker ps -a | grep pelikan | awk '{print $1}' | xargs -r docker rm -f || true
+            docker ps -a | grep FAQ_telegrambot_Pelican | awk '{print $1}' | xargs -r docker rm -f || true
 
             sleep 3
 
