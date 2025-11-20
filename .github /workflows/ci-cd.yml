@@ -15,6 +15,15 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
       
+      - name: Debug - Check secrets
+        run: |
+          echo "Username length: ${#DOCKERHUB_USERNAME}"
+          echo "Password length: ${#DOCKER_PASSWORD}"
+          echo "Username starts with: ${DOCKERHUB_USERNAME:0:3}..."
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       
@@ -24,14 +33,23 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       
+      - name: Debug - Check login
+        run: |
+          echo "Checking Docker auth..."
+          cat ~/.docker/config.json | grep -o '"auths":{[^}]*}' || echo "No auth found"
+      
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
           tags: ${{ env.IMAGE_NAME }}
-          
-      - name: Verify push
+          provenance: false
+      
+      - name: Debug - Verify image
         run: |
-          echo "Image should be available at: https://hub.docker.com/r/andreysagurov/faq_telegrambot_pelican"
-          docker pull ${{ env.IMAGE_NAME }}
+          echo "Attempting to pull image..."
+          docker pull ${{ env.IMAGE_NAME }} || echo "Pull failed"
+          echo "Checking Docker Hub..."
+          curl -s https://hub.docker.com/v2/repositories/andreysagurov/faq_telegrambot_pelican/tags/ | head -20
+          
