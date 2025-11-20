@@ -102,30 +102,42 @@ def help_command(message):
         parse_mode='HTML'
     )
 
+@bot.message_handler(func=lambda message: message.text == "🔄 Главное меню")
+def main_menu(message):
+    start(message)
+
+@bot.message_handler(func=lambda message: message.text in FAQ.keys())
+def handle_faq(message):
+    question = message.text
+    answer_data = FAQ[question]
+    markup = types.InlineKeyboardMarkup()
+    markup.add(types.InlineKeyboardButton("◀️ Назад к вопросам", callback_data="back"))
+    bot.send_message(
+        message.chat.id,
+        answer_data["text"],
+        reply_markup=markup,
+        parse_mode='HTML'
+    )
+
+@bot.callback_query_handler(func=lambda call: call.data == "back")
+def callback_back(call):
+    bot.answer_callback_query(call.id, "Возвращаюсь к вопросам...")
+    start(call.message)
+
 @bot.message_handler(func=lambda message: True)
-def fallback(message):
+def echo_all(message):
     markup = types.InlineKeyboardMarkup()
     markup.add(types.InlineKeyboardButton("📋 Показать меню", callback_data="show_menu"))
     bot.send_message(
         message.chat.id,
         "🤔 Не понимаю вашего вопроса.\n\n"
-        "Пожалуйста, используйте кнопки меню ниже или нажмите на кнопку:",
+        "Пожалуйста, выберите интересующий раздел или нажмите кнопку ниже.",
         reply_markup=markup
     )
 
 @bot.callback_query_handler(func=lambda call: call.data == "show_menu")
-def callback_menu(call):
-    bot.answer_callback_query(call.id)
+def show_menu(call):
     start(call.message)
 
 if __name__ == '__main__':
-    print("🤖 Бот «Пеликан Алаколь» запущен и готов к работе...")
-    print(f"📝 Загружено {len(FAQ)} FAQ разделов")
-    try:
-        bot.infinity_polling(timeout=10, long_polling_timeout=5)
-    except Exception as e:
-        print(f"❌ Ошибка: {e}")
-        print("Перезапуск через 5 секунд...")
-        import time
-        time.sleep(5)
-        bot.infinity_polling(timeout=10, long_polling_timeout=5)
+    bot.polling(none_stop=True)
