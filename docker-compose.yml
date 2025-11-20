@@ -2,8 +2,8 @@ version: '3.8'
 
 services:
   telegram-bot:
-    image: yourdockerhubusername/faq_telegrambot_pelican:latest
-    container_name: faq-telegram-bot
+    image: andreysagurov/faq_telegrambot_pelican:latest
+    container_name: faq_telegrambot_pelican
     restart: unless-stopped
     environment:
       - BOT_TOKEN=${BOT_TOKEN}
