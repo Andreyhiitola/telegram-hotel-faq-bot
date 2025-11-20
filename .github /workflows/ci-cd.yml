@@ -7,7 +7,7 @@ on:
   workflow_dispatch:  # Поддержка ручного запуска
 
 env:
-  IMAGE_NAME: andreysagurov/FAQ_telegrambot_Pelican:latest
+  IMAGE_NAME: andreysagurov/faq_telegrambot_pelican:latest
 
 jobs:
   build_and_push:
