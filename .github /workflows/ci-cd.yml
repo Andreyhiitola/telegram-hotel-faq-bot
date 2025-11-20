@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:  # Добавляем поддержку ручного запуска
 
 env:
   IMAGE_NAME: pelikan-admin
@@ -11,7 +12,6 @@ env:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -31,11 +31,10 @@ jobs:
           context: .
           push: true
           tags: andreysagurov/pelikan-admin:latest
-  
+
   deploy:
     runs-on: ubuntu-latest
     needs: build-and-push
-    
     steps:
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v1.0.3
@@ -61,8 +60,8 @@ jobs:
             
             # SSL сертификаты
             echo "Checking SSL certificates..."
-            if [ -d privkey.pem ] || [ -d fullchain.pem ]; then
-              echo "Removing incorrect directories..."
+            if [ -f privkey.pem ] || [ -f fullchain.pem ]; then
+              echo "Removing incorrect files..."
               rm -rf privkey.pem fullchain.pem
             fi
             
