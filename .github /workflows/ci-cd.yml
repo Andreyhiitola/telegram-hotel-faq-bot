@@ -7,7 +7,7 @@ on:
   workflow_dispatch:  # Добавляем поддержку ручного запуска
 
 env:
-  IMAGE_NAME: pelikan-admin
+  IMAGE_NAME: faq-telegram-bot
 
 jobs:
   build-and-push:
