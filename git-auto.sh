@@ -1,7 +1,18 @@
 #!/bin/bash
 
-# Поднимаемся в корень репозитория (если нужно)
-cd /root/telegram-hotel-faq-bot || exit 1
+# Загружаем переменные из .env
+if [ -f .env ]; then
+  export $(cat .env | xargs)
+else
+  echo "Ошибка: файл .env не найден"
+  exit 1
+fi
+
+# Переменные из .env
+REPO_PATH=/root/telegram-hotel-faq-bot
+
+
+cd "$REPO_PATH" || exit 1
 
 # Обновить локальную ветку с origin
 git pull origin main
@@ -21,7 +32,7 @@ fi
 # Выполняем коммит с введённым сообщением
 git commit -m "$commit_message"
 
-# Отправляем изменения на сервер
-git push origin main
+# Отправляем изменения на сервер с переменными из .env
+git push https://$GIT_USERNAME:$GIT_PASSWORD@github.com/your_username/your_repo.git main
 
 echo "Изменения отправлены."
