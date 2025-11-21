@@ -360,29 +360,60 @@ FAQ = {
     }
 }
 
+# ============= ПАГИНАЦИЯ =============
+FAQ_KEYS = list(FAQ.keys())
+ITEMS_PER_PAGE = 4  # 4 кнопки на странице
+
+def create_faq_markup(page=1):
+    """Создаёт меню с пагинацией для показа 4 разделов на странице"""
+    markup = types.InlineKeyboardMarkup()
+    
+    # Расчёт позиций
+    start_idx = (page - 1) * ITEMS_PER_PAGE
+    end_idx = start_idx + ITEMS_PER_PAGE
+    
+    # Кнопки для текущей страницы (по 1 кнопке в строке для удобства)
+    page_items = FAQ_KEYS[start_idx:end_idx]
+    
+    for item in page_items:
+        markup.add(
+            types.InlineKeyboardButton(
+                item,
+                callback_data=f"faq_{item}"
+            )
+        )
+    
+    # ============= КНОПКИ НАВИГАЦИИ =============
+    nav_buttons = []
+    
+    if page > 1:
+        nav_buttons.append(
+            types.InlineKeyboardButton("◀️ Назад", callback_data=f"page_{page - 1}")
+        )
+    
+    # Показываем текущую страницу и всего страниц
+    total_pages = (len(FAQ_KEYS) + ITEMS_PER_PAGE - 1) // ITEMS_PER_PAGE
+    
+    nav_buttons.append(
+        types.InlineKeyboardButton(f"{page}/{total_pages}", callback_data="page_info")
+    )
+    
+    if end_idx < len(FAQ_KEYS):
+        nav_buttons.append(
+            types.InlineKeyboardButton("Вперед ▶️", callback_data=f"page_{page + 1}")
+        )
+    
+    if nav_buttons:
+        markup.row(*nav_buttons)
+    
+    return markup
+
 # ============= ОБРАБОТЧИКИ =============
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    """Главное меню с кнопками всех разделов FAQ"""
-    markup = types.InlineKeyboardMarkup(row_width=2)
-    
-    # Создаём кнопки для каждого раздела FAQ
-    buttons = []
-    for question in FAQ.keys():
-        buttons.append(
-            types.InlineKeyboardButton(
-                question, 
-                callback_data=f"faq_{question}"
-            )
-        )
-    
-    # Добавляем кнопки в 2 колонки
-    for i in range(0, len(buttons), 2):
-        if i + 1 < len(buttons):
-            markup.row(buttons[i], buttons[i + 1])
-        else:
-            markup.row(buttons[i])
+    """Главное меню с пагинацией"""
+    markup = create_faq_markup(page=1)
     
     bot.send_message(
         message.chat.id,
@@ -392,7 +423,7 @@ def start(message):
         "🌳 Самая зелёная база с более 5000 деревьев\n"
         "🏡 Уютные деревянные домики\n"
         "👨‍👩‍👧 Идеально для семейного отдыха\n\n"
-        "Выберите интересующий раздел ⬇️",
+        "📋 Выберите интересующий раздел ⬇️",
         reply_markup=markup,
         parse_mode='HTML'
     )
@@ -408,7 +439,7 @@ def callback_faq(call):
         # Кнопка для возврата в меню
         markup = types.InlineKeyboardMarkup()
         markup.add(
-            types.InlineKeyboardButton("◀️ Назад к вопросам", callback_data="back")
+            types.InlineKeyboardButton("◀️ Назад в меню", callback_data="back_to_menu")
         )
         
         bot.edit_message_text(
@@ -421,28 +452,32 @@ def callback_faq(call):
     
     bot.answer_callback_query(call.id)
 
-@bot.callback_query_handler(func=lambda call: call.data == "back")
-def callback_back(call):
-    """Возврат в главное меню"""
-    bot.answer_callback_query(call.id, "Возвращаюсь к вопросам...")
+@bot.callback_query_handler(func=lambda call: call.data.startswith('page_'))
+def callback_page(call):
+    """Переключение страниц"""
+    if call.data == "page_info":
+        bot.answer_callback_query(call.id, "Используйте кнопки для навигации", show_alert=False)
+        return
     
-    # Очищаем старое сообщение и показываем меню
-    markup = types.InlineKeyboardMarkup(row_width=2)
+    page = int(call.data[5:])  # убираем префикс "page_"
+    markup = create_faq_markup(page=page)
     
-    buttons = []
-    for question in FAQ.keys():
-        buttons.append(
-            types.InlineKeyboardButton(
-                question, 
-                callback_data=f"faq_{question}"
-            )
-        )
+    total_pages = (len(FAQ_KEYS) + ITEMS_PER_PAGE - 1) // ITEMS_PER_PAGE
     
-    for i in range(0, len(buttons), 2):
-        if i + 1 < len(buttons):
-            markup.row(buttons[i], buttons[i + 1])
-        else:
-            markup.row(buttons[i])
+    bot.edit_message_text(
+        chat_id=call.message.chat.id,
+        message_id=call.message.message_id,
+        text=f"👋 <b>Выберите интересующий раздел (Страница {page}/{total_pages}):</b>",
+        reply_markup=markup,
+        parse_mode='HTML'
+    )
+    
+    bot.answer_callback_query(call.id)
+
+@bot.callback_query_handler(func=lambda call: call.data == "back_to_menu")
+def callback_back_to_menu(call):
+    """Возврат в главное меню на первую страницу"""
+    markup = create_faq_markup(page=1)
     
     bot.edit_message_text(
         chat_id=call.message.chat.id,
@@ -451,6 +486,8 @@ def callback_back(call):
         reply_markup=markup,
         parse_mode='HTML'
     )
+    
+    bot.answer_callback_query(call.id)
 
 @bot.message_handler(commands=['help'])
 def help_command(message):
@@ -459,6 +496,7 @@ def help_command(message):
         message.chat.id,
         "📖 <b>Помощь</b>\n\n"
         "• Используйте кнопки для выбора раздела\n"
+        "• Используйте ◀️ Назад и Вперед ▶️ для навигации\n"
         "• /start - вернуться в главное меню\n"
         "• /help - показать эту справку\n\n"
         "📞 <b>Контакты для бронирования:</b>\n"
@@ -474,7 +512,7 @@ def echo_all(message):
     """Обработка любых других сообщений"""
     markup = types.InlineKeyboardMarkup()
     markup.add(
-        types.InlineKeyboardButton("📋 Показать меню", callback_data="show_menu")
+        types.InlineKeyboardButton("📋 Показать меню", callback_data="back_to_menu")
     )
     
     bot.send_message(
@@ -484,14 +522,10 @@ def echo_all(message):
         reply_markup=markup
     )
 
-@bot.callback_query_handler(func=lambda call: call.data == "show_menu")
-def show_menu(call):
-    """Показать меню при клике на кнопку"""
-    start(call.message)
-
 # ============= ЗАПУСК БОТА =============
 
 if __name__ == '__main__':
     print("🤖 Бот запущен и готов к работе...")
     print("📝 Загружено %d FAQ разделов" % len(FAQ))
+    print("📄 Всего страниц меню: %d" % ((len(FAQ_KEYS) + ITEMS_PER_PAGE - 1) // ITEMS_PER_PAGE))
     bot.polling(none_stop=True)
