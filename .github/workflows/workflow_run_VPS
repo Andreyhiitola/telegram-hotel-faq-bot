@@ -2,9 +2,9 @@ name: Deploy on VPS
 
 on:
   workflow_run:
-    workflows: ["faq_telegram_pelican"]
+    workflows: ["Build and Push Docker Image"]
     types:
-      - completed
+    - completed
 
 jobs:
   deploy:
