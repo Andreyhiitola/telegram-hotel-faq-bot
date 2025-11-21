@@ -179,7 +179,17 @@ def start(message):
         reply_markup=markup,
         parse_mode='HTML'
     )
+import telebot
+from telebot import types
+import os
 
+# Проверка словаря до запуска бота
+try:
+    print(f"Количество разделов в FAQ: {len(FAQ)}")
+    print("Разделы:", list(FAQ.keys()))
+except Exception as e:
+    print(f"ОШИБКА в словаре FAQ: {e}")
+    exit()
 @bot.callback_query_handler(func=lambda call: call.data.startswith('faq_'))
 def callback_faq(call):
     question = call.data[4:]  # убираем префикс "faq_"
