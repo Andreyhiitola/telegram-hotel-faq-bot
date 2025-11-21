@@ -23,7 +23,7 @@ wheels/
 .installed.cfg
 *.egg
 MANIFEST
-
+git-auto.sh
 # Virtual Environment
 venv/
 ENV/
