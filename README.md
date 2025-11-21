@@ -1,7 +1,6 @@
 # 🏨 Telegram FAQ Bot для гостиницы
 
 
-
 <div align="center">
 ![Python](https://img.shields.io/badge/python-3.11-blue.svg)
 ![Docker](https://img.shields.io/badge/docker-ready-brightgreen.svg)
