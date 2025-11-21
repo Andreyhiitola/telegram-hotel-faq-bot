@@ -5,7 +5,6 @@ import os
 BOT_TOKEN = os.getenv('BOT_TOKEN', 'YOUR_BOT_TOKEN_HERE')
 bot = telebot.TeleBot(BOT_TOKEN)
 
-
 # FAQ данные для базы отдыха "Пеликан" на озере Алаколь
 FAQ = {
     "🏨 Заезд и выезд": {
@@ -361,52 +360,30 @@ FAQ = {
     }
 }
 
+# ============= ОБРАБОТЧИКИ =============
+
 @bot.message_handler(commands=['start'])
 def start(message):
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+    """Главное меню с кнопками всех разделов FAQ"""
+    markup = types.InlineKeyboardMarkup(row_width=2)
+    
+    # Создаём кнопки для каждого раздела FAQ
     buttons = []
     for question in FAQ.keys():
-        buttons.append(types.KeyboardButton(question))
+        buttons.append(
+            types.InlineKeyboardButton(
+                question, 
+                callback_data=f"faq_{question}"
+            )
+        )
+    
+    # Добавляем кнопки в 2 колонки
     for i in range(0, len(buttons), 2):
         if i + 1 < len(buttons):
             markup.row(buttons[i], buttons[i + 1])
         else:
             markup.row(buttons[i])
-    markup.row(types.KeyboardButton("🔄 Главное меню"))
-    bot.send_message(
-        message.chat.id,
-        f"👋 <b>Добро пожаловать в ЦСО «Пеликан»!</b>\n\n"
-        f"Здравствуйте, {message.from_user.first_name}! 🌊\n\n"
-        "🏖️ База отдыха «Пеликан» на озере Алаколь\n"
-        "🌳 Самая зелёная база с более 5000 деревьев\n"
-        "🏡 Уютные деревянные домики\n"
-        "👨‍👩‍👧 Идеально для семейного отдыха\n\n"
-        "Выберите интересующий раздел ⬇️",
-        reply_markup=markup,
-        parse_mode='HTML'
-    )
-
-@bot.message_handler(commands=['help'])
-def help_command(message):
-    bot.send_message(
-        message.chat.id,
-        "📖 <b>Помощь</b>\n\n"
-        "• Используйте кнопки для выбора раздела\n"
-        "• /start - вернуться в главное меню\n"
-        "• /help - показать эту справку\n\n"
-        "📞 <b>Контакты для бронирования:</b>\n"
-        "WhatsApp: +7 776 756 00 89\n"
-        "Телефон: +7 (727) 275-00-89\n"
-        "Телефон: +7 (727) 275-38-76\n\n"
-        "🌐 Сайт: pelican-alacol.ru",
-        parse_mode='HTML'
-    )
-
-@bot.message_handler(commands=['start'])
-def start(message):
-    markup = types.InlineKeyboardMarkup(row_width=2)
-    for question in FAQ.keys():
-        markup.add(types.InlineKeyboardButton(question, callback_data=f"faq_{question}"))
+    
     bot.send_message(
         message.chat.id,
         f"👋 <b>Добро пожаловать в ЦСО «Пеликан»!</b>\n\n"
@@ -422,11 +399,18 @@ def start(message):
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('faq_'))
 def callback_faq(call):
+    """Обработка нажатия на кнопку FAQ"""
     question = call.data[4:]  # убираем префикс "faq_"
+    
     if question in FAQ:
         answer_data = FAQ[question]
+        
+        # Кнопка для возврата в меню
         markup = types.InlineKeyboardMarkup()
-        markup.add(types.InlineKeyboardButton("◀️ Назад к вопросам", callback_data="back"))
+        markup.add(
+            types.InlineKeyboardButton("◀️ Назад к вопросам", callback_data="back")
+        )
+        
         bot.edit_message_text(
             chat_id=call.message.chat.id,
             message_id=call.message.message_id,
@@ -434,15 +418,43 @@ def callback_faq(call):
             reply_markup=markup,
             parse_mode='HTML'
         )
+    
     bot.answer_callback_query(call.id)
 
 @bot.callback_query_handler(func=lambda call: call.data == "back")
 def callback_back(call):
+    """Возврат в главное меню"""
     bot.answer_callback_query(call.id, "Возвращаюсь к вопросам...")
-    start(call.message)
+    
+    # Очищаем старое сообщение и показываем меню
+    markup = types.InlineKeyboardMarkup(row_width=2)
+    
+    buttons = []
+    for question in FAQ.keys():
+        buttons.append(
+            types.InlineKeyboardButton(
+                question, 
+                callback_data=f"faq_{question}"
+            )
+        )
+    
+    for i in range(0, len(buttons), 2):
+        if i + 1 < len(buttons):
+            markup.row(buttons[i], buttons[i + 1])
+        else:
+            markup.row(buttons[i])
+    
+    bot.edit_message_text(
+        chat_id=call.message.chat.id,
+        message_id=call.message.message_id,
+        text="👋 <b>Выберите интересующий раздел:</b>",
+        reply_markup=markup,
+        parse_mode='HTML'
+    )
 
 @bot.message_handler(commands=['help'])
 def help_command(message):
+    """Справка по использованию бота"""
     bot.send_message(
         message.chat.id,
         "📖 <b>Помощь</b>\n\n"
@@ -457,32 +469,14 @@ def help_command(message):
         parse_mode='HTML'
     )
 
-@bot.message_handler(func=lambda message: message.text == "🔄 Главное меню")
-def main_menu(message):
-    start(message)
-
-@bot.message_handler(func=lambda message: message.text in FAQ.keys())
-def handle_faq(message):
-    question = message.text
-    answer_data = FAQ[question]
-    markup = types.InlineKeyboardMarkup()
-    markup.add(types.InlineKeyboardButton("◀️ Назад к вопросам", callback_data="back"))
-    bot.send_message(
-        message.chat.id,
-        answer_data["text"],
-        reply_markup=markup,
-        parse_mode='HTML'
-    )
-
-@bot.callback_query_handler(func=lambda call: call.data == "back")
-def callback_back(call):
-    bot.answer_callback_query(call.id, "Возвращаюсь к вопросам...")
-    start(call.message)
-
 @bot.message_handler(func=lambda message: True)
 def echo_all(message):
+    """Обработка любых других сообщений"""
     markup = types.InlineKeyboardMarkup()
-    markup.add(types.InlineKeyboardButton("📋 Показать меню", callback_data="show_menu"))
+    markup.add(
+        types.InlineKeyboardButton("📋 Показать меню", callback_data="show_menu")
+    )
+    
     bot.send_message(
         message.chat.id,
         "🤔 Не понимаю вашего вопроса.\n\n"
@@ -492,7 +486,12 @@ def echo_all(message):
 
 @bot.callback_query_handler(func=lambda call: call.data == "show_menu")
 def show_menu(call):
+    """Показать меню при клике на кнопку"""
     start(call.message)
 
+# ============= ЗАПУСК БОТА =============
+
 if __name__ == '__main__':
+    print("🤖 Бот запущен и готов к работе...")
+    print("📝 Загружено %d FAQ разделов" % len(FAQ))
     bot.polling(none_stop=True)
