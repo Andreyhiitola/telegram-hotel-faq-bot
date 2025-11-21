@@ -33,6 +33,6 @@ fi
 git commit -m "$commit_message"
 
 # Отправляем изменения на сервер с переменными из .env
-git push https://$GIT_USERNAME:$GIT_PASSWORD@github.com/your_username/your_repo.git main
+git push https://$GIT_USERNAME:$GIT_PASSWORD@github.com/Andreyhiitola/telegram-hotel-faq-bot
 
 echo "Изменения отправлены."
