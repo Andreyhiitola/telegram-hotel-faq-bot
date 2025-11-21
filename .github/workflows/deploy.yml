@@ -19,7 +19,7 @@ jobs:
         password: ${{ secrets.DOCKERHUB_TOKEN }}
 
     - name: Build Docker image
-      run: docker build -t your-dockerhub-username/your-image-name:latest .
+      run: docker build -t andreysagurov/faq_telegram_pelican:latest .
 
     - name: Push Docker image
       run: docker push your-dockerhub-username/your-image-name:latest
